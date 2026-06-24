@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartChef AI - 智慧食譜推薦系統</title>
+    <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🍳 SmartChef AI</h1>
+                <p class="subtitle">智慧食譜推薦系統</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Input Section -->
+            <section class="input-section">
+                <div class="card">
+                    <h2>📝 輸入食材與偏好</h2>
+                    
+                    <div class="form-group">
+                        <label for="ingredients">食材清單 (逗號分隔)</label>
+                        <textarea 
+                            id="ingredients" 
+                            placeholder="例如: 雞肉, 番茄, 洋蔥, 大蒜, 米"
+                            rows="4"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dietary">飲食偏好/限制</label>
+                        <textarea 
+                            id="dietary" 
+                            placeholder="例如: 素食, 低糖, 無麩質, 辛辣, 無堅果"
+                            rows="3"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="difficulty">烹飪難度偏好</label>
+                        <select id="difficulty">
+                            <option value="">-- 選擇難度 --</option>
+                            <option value="簡單">簡單（10分鐘以內）</option>
+                            <option value="中等">中等（10-30分鐘）</option>
+                            <option value="困難">困難（30分鐘以上）</option>
+                            <option value="任何">任何難度</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="servings">人份數</label>
+                        <input 
+                            type="number" 
+                            id="servings" 
+                            min="1" 
+                            max="20" 
+                            value="2"
+                            placeholder="預設2人份"
+                        >
+                    </div>
+
+                    <div class="button-group">
+                        <button id="generateBtn" class="btn btn-primary" onclick="generateRecipe()">
+                            🤖 生成食譜
+                        </button>
+                        <button id="saveBtn" class="btn btn-secondary" onclick="saveToSheets()" disabled>
+                            💾 保存到 Google Sheets
+                        </button>
+                        <button id="clearBtn" class="btn btn-outline" onclick="clearForm()">
+                            🗑️ 清空
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Loading Spinner -->
+            <div id="loadingSpinner" class="loading hidden">
+                <div class="spinner"></div>
+                <p>正在生成食譜，請稍候...</p>
+            </div>
+
+            <!-- Results Section -->
+            <section id="resultsSection" class="results-section hidden">
+                <div class="card">
+                    <h2>🍜 推薦食譜</h2>
+                    <div id="recipeResults" class="recipe-results"></div>
+                </div>
+            </section>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="error-message hidden"></div>
+
+            <!-- Info Box -->
+            <section class="info-section">
+                <div class="info-card">
+                    <h3>💡 使用提示</h3>
+                    <ul>
+                        <li>輸入你家中現有的食材</li>
+                        <li>選擇你的飲食偏好和烹飪難度</li>
+                        <li>AI 會為你生成適合的食譜</li>
+                        <li>滿意的食譜可保存到 Google Sheets</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>SmartChef AI © 2024 | 驅動免費 AI API (Gemini)</p>
+        </footer>
+    </div>
+
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/api.js"></script>
+    <script src="./assets/js/main.js"></script>
+</body>
+</html>
