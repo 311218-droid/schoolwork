@@ -1,10 +1,16 @@
 // SmartChef AI - API Communication Module
 
 /**
- * Call Google Gemini API to generate recipe recommendations
+ * Call Google Gemini (via Apps Script backend or direct) to generate recipe recommendations
  */
 async function callGeminiAPI(ingredients, dietary, difficulty, servings) {
     try {
+        // If debug direct AI is enabled, call Gemini API directly (bypass Apps Script)
+        if (CONFIG.DEBUG && CONFIG.DEBUG.DIRECT_AI) {
+            const prompt = buildRecipePrompt(ingredients, dietary, difficulty, servings);
+            return await callGeminiDirectAPI(prompt);
+        }
+
         if (!CONFIG.GOOGLE_SHEETS.SCRIPT_URL || CONFIG.GOOGLE_SHEETS.SCRIPT_URL.includes('YOUR_')) {
             throw new Error('Google Apps Script 部署 URL 未配置，請在 config.js 設定 GOOGLE_SHEETS.SCRIPT_URL');
         }
@@ -20,7 +26,19 @@ async function callGeminiAPI(ingredients, dietary, difficulty, servings) {
             body: JSON.stringify(payload)
         });
 
-        const result = await response.json();
+        const rawText = await response.text();
+        let result;
+        try {
+            result = rawText ? JSON.parse(rawText) : {};
+        } catch (e) {
+            console.error('非 JSON 回應:', rawText);
+            throw new Error(`後端回傳非 JSON 回應: ${rawText}`);
+        }
+
+        if (!response.ok) {
+            throw new Error(result.message || `後端 HTTP 錯誤 (${response.status})`);
+        }
+
         if (!result.success) {
             throw new Error(result.message || 'AI 生成失敗');
         }
@@ -69,13 +87,11 @@ function buildRecipePrompt(ingredients, dietary, difficulty, servings) {
  */
 function parseRecipeResponse(text) {
     const recipes = [];
-    
-    // Split by recipe title pattern
     const recipeBlocks = text.split(/(?=🍽️)/);
-    
+
     for (const block of recipeBlocks) {
         if (!block.trim()) continue;
-        
+
         const recipe = {
             name: extractSection(block, /🍽️\s*(.+?)(?:\n|$)/),
             time: extractSection(block, /⏱️\s*時間:\s*(.+?)(?:\n|$)/),
@@ -85,50 +101,35 @@ function parseRecipeResponse(text) {
             tips: extractSection(block, /💡\s*小貼士:\s*(.+?)(?:\n|$)/),
             raw: block
         };
-        
-        if (recipe.name) {
-            recipes.push(recipe);
-        }
+
+        if (recipe.name) recipes.push(recipe);
     }
-    
+
     return recipes.length > 0 ? recipes : parseGenericRecipe(text);
 }
 
-/**
- * Extract a section from text using regex
- */
 function extractSection(text, regex) {
     const match = text.match(regex);
     return match ? match[1].trim() : '';
 }
 
-/**
- * Extract list items from a section
- */
 function extractListSection(text, sectionRegex) {
     const sectionStart = text.search(sectionRegex);
     if (sectionStart === -1) return [];
-    
+
     const afterSection = text.substring(sectionStart);
-    
-    // Extract lines until next section marker
     const nextSection = afterSection.search(/(?=📋|👨‍🍳|⏱️|📊|💡|🍽️)/);
     const section = nextSection === -1 ? afterSection : afterSection.substring(0, nextSection);
-    
-    const lines = section.split('\n')
-        .slice(1) // Skip the section header
+
+    const lines = section.split('\n').slice(1)
         .filter(line => line.trim())
         .map(line => line.replace(/^[-•*]\s*/, '').trim())
         .filter(line => line.length > 0);
-    
+
     return lines;
 }
 
-/**
- * Fallback parser for generic recipe format
- */
 function parseGenericRecipe(text) {
-    // If the above parsing fails, create a generic recipe object
     return [{
         name: '推薦食譜',
         time: '待定',
@@ -138,6 +139,42 @@ function parseGenericRecipe(text) {
         tips: '請按照 AI 提供的詳細指示進行烹飪',
         raw: text
     }];
+}
+
+/**
+ * Call Gemini API directly from frontend (for debug/testing only).
+ * Returns parsed recipes array.
+ */
+async function callGeminiDirectAPI(promptText) {
+    try {
+        if (!CONFIG.AI || !CONFIG.AI.API_URL || !CONFIG.AI.API_KEY) {
+            throw new Error('AI API 配置缺失 (API_URL 或 API_KEY)');
+        }
+
+        const body = { contents: [{ parts: [{ text: promptText }] }] };
+        const url = CONFIG.AI.API_URL.includes('?') ? `${CONFIG.AI.API_URL}&key=${CONFIG.AI.API_KEY}` : `${CONFIG.AI.API_URL}?key=${CONFIG.AI.API_KEY}`;
+
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        const raw = await resp.text();
+        let data;
+        try { data = raw ? JSON.parse(raw) : {}; } catch (e) { throw new Error(`AI 回應非 JSON: ${raw}`); }
+
+        if (!resp.ok) {
+            throw new Error(data.error ? data.error.message : `AI HTTP 錯誤 (${resp.status})`);
+        }
+
+        const text = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text) || '';
+        return parseRecipeResponse(text || '');
+
+    } catch (error) {
+        console.error('Direct AI Error:', error);
+        throw new Error(`直接呼叫 AI 失敗: ${error.message}`);
+    }
 }
 
 /**
@@ -155,8 +192,8 @@ async function saveRecipeToSheets(recipe, ingredients, dietary) {
                 name: recipe.name,
                 time: recipe.time,
                 difficulty: recipe.difficulty,
-                ingredients: recipe.ingredients.join(', '),
-                instructions: recipe.instructions.join('\n'),
+                ingredients: Array.isArray(recipe.ingredients) ? recipe.ingredients.join(', ') : recipe.ingredients,
+                instructions: Array.isArray(recipe.instructions) ? recipe.instructions.join('\n') : recipe.instructions,
                 tips: recipe.tips,
                 inputIngredients: ingredients,
                 dietary: dietary,
@@ -166,17 +203,16 @@ async function saveRecipeToSheets(recipe, ingredients, dietary) {
 
         const response = await fetch(CONFIG.GOOGLE_SHEETS.SCRIPT_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
 
-        const result = await response.json();
-        
-        if (!result.success) {
-            throw new Error(result.message || '保存失敗');
-        }
+        const rawText = await response.text();
+        let result;
+        try { result = rawText ? JSON.parse(rawText) : {}; } catch (e) { throw new Error(`後端回傳非 JSON 回應: ${rawText}`); }
+
+        if (!response.ok) throw new Error(result.message || `後端 HTTP 錯誤 (${response.status})`);
+        if (!result.success) throw new Error(result.message || '保存失敗');
 
         return result;
 

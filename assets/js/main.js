@@ -84,14 +84,31 @@ function displayRecipes(recipes, ingredients, dietary) {
                 </div>
             ` : ''}
 
-            ${recipe.instructions && recipe.instructions.length > 0 ? `
-                <div class="recipe-instructions">
-                    <h4>👨‍🍳 烹飪步驟:</h4>
-                    <ol>
-                        ${recipe.instructions.map(step => `<li>${step}</li>`).join('')}
-                    </ol>
-                </div>
-            ` : ''}
+            ${(() => {
+                if (recipe.instructions && recipe.instructions.length > 0) {
+                    return `
+                        <div class="recipe-instructions">
+                            <h4>👨‍🍳 製作流程:</h4>
+                            <ol>
+                                ${recipe.instructions.map(step => `<li>${step}</li>`).join('')}
+                            </ol>
+                        </div>
+                    `;
+                }
+
+                if (recipe.raw && recipe.raw.trim()) {
+                    // Fallback: show raw text as the production process
+                    const safeRaw = recipe.raw.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    return `
+                        <div class="recipe-instructions">
+                            <h4>👨‍🍳 製作流程 (原始):</h4>
+                            <pre style="white-space:pre-wrap; background:#fff; padding:10px; border-radius:4px;">${safeRaw}</pre>
+                        </div>
+                    `;
+                }
+
+                return '';
+            })()}
 
             ${recipe.tips ? `
                 <div class="recipe-tips" style="margin-top: 15px; padding: 10px; background: #fff3cd; border-left: 3px solid #ffc107; border-radius: 4px;">

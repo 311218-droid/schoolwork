@@ -20,8 +20,9 @@ const CONFIG = {
         // Using Google Gemini Free API
         // When using the Apps Script backend, store the AI API key in Script Properties (key = AI_API_KEY)
         PROVIDER: 'GEMINI',
-        API_KEY: 'AQ.Ab8RN6Kvs2PR1hFknX19kYn31SyeBZYOC-gJB-JJ45XVEADxTQ',
-        API_URL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+        API_KEY: 'AQ.Ab8RN6LwPP8OQvzpXbHRaOHaqe1cB6ntXqRvFn098ehulTWyyQ',
+        // 使用可用的模型端點（若無法使用請改為你帳號可用的 model name）
+        API_URL: 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent'
     },
 
     // App Settings
@@ -30,6 +31,11 @@ const CONFIG = {
         RECIPE_LANGUAGE: 'zh-TW',
         TEMPERATURE: 0.7
     }
+};
+
+// Debug settings (開發時可啟用直接呼叫 AI，生產環境請關閉)
+CONFIG.DEBUG = {
+    DIRECT_AI: true
 };
 
 // Note: 

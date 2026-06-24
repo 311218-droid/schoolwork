@@ -9,13 +9,44 @@
  * 5. Copy the deployment URL to config.js in the frontend
  */
 
-// Replace with your spreadsheet ID
-const SHEET_ID = 'YOUR_SPREADSHEET_ID_HERE';
+// Read configuration from Script Properties when possible
+const SHEET_ID = (function() {
+    try {
+        const id = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+        return id || 'YOUR_SPREADSHEET_ID_HERE';
+    } catch (e) {
+        return 'YOUR_SPREADSHEET_ID_HERE';
+    }
+})();
+
 const SHEET_NAME = 'recipes';
 
 // AI settings (store API key in Script Properties: key name = AI_API_KEY)
 const AI_PROVIDER = 'GEMINI';
-const AI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const AI_API_URL = (function() {
+    try {
+        return PropertiesService.getScriptProperties().getProperty('AI_API_URL') || 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+    } catch (e) {
+        return 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+    }
+})();
+
+/**
+ * Simple GET handler for health checks and quick debugging.
+ * Use: GET ?action=ping returns a JSON pong.
+ */
+function doGet(e) {
+    try {
+        const params = e && e.parameter ? e.parameter : {};
+        if (params.action === 'ping') {
+            return sendResponse(true, 'pong', { sheetId: SHEET_ID !== 'YOUR_SPREADSHEET_ID_HERE' });
+        }
+
+        return sendResponse(true, 'Apps Script Web App is running');
+    } catch (error) {
+        return sendResponse(false, `doGet Error: ${error.message}`);
+    }
+}
 
 /**
  * Handle incoming requests from the frontend
