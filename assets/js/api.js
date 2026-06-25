@@ -8,7 +8,12 @@ async function callGeminiAPI(ingredients, dietary, difficulty, servings) {
         // If debug direct AI is enabled, call Gemini API directly (bypass Apps Script)
         if (CONFIG.DEBUG && CONFIG.DEBUG.DIRECT_AI) {
             const prompt = buildRecipePrompt(ingredients, dietary, difficulty, servings);
-            return await callGeminiDirectAPI(prompt);
+            try {
+                return await callGeminiDirectAPI(prompt);
+            } catch (error) {
+                console.warn('Direct AI 失敗，改用 Apps Script 後端:', error);
+                // 如果開啟了 direct AI 但失敗，嘗試使用 Apps Script 後端作為備援
+            }
         }
 
         if (!CONFIG.GOOGLE_SHEETS.SCRIPT_URL || CONFIG.GOOGLE_SHEETS.SCRIPT_URL.includes('YOUR_')) {
@@ -173,7 +178,7 @@ async function callGeminiDirectAPI(promptText) {
 
     } catch (error) {
         console.error('Direct AI Error:', error);
-        throw new Error(`直接呼叫 AI 失敗: ${error.message}`);
+        throw new Error(`直接呼叫 AI 失敗: ${error.message}. 若未配置有效 AI.API_KEY，請將 CONFIG.DEBUG.DIRECT_AI 設為 false 並使用 Apps Script 後端。`);
     }
 }
 

@@ -29,7 +29,7 @@ const CONFIG = {
         // Using Google Gemini Free API
         // When using the Apps Script backend, store the AI API key in Script Properties (key = AI_API_KEY)
         PROVIDER: 'GEMINI',
-        API_KEY: 'AQ.Ab8RN6LwPP8OQvzpXbHRaOHaqe1cB6ntXqRvFn098ehulTWyyQ',
+        API_KEY: 'AIzaSyAwcOxWPh8ifxsr23wJHuAOXnwA0YECxVU',
         // 使用可用的模型端點（若無法使用請改為你帳號可用的 model name）
         API_URL: 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent'
     },
@@ -44,8 +44,9 @@ const CONFIG = {
 };
 
 // Debug settings (開發時可啟用直接呼叫 AI，生產環境請關閉)
+// 將 DIRECT_AI 設為 false 可避免前端直接呼叫 Gemini API，減少憑證問題
 CONFIG.DEBUG = {
-    DIRECT_AI: true
+    DIRECT_AI: false
 };
 
 // Note: 
