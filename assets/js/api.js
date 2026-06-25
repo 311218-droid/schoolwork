@@ -20,6 +20,8 @@ async function callGeminiAPI(ingredients, dietary, difficulty, servings) {
             throw new Error('Google Apps Script 部署 URL 未配置，請在 config.js 設定 GOOGLE_SHEETS.SCRIPT_URL');
         }
 
+        await validateAppsScriptEndpoint();
+
         const payload = {
             action: 'generateRecipe',
             inputs: { ingredients, dietary, difficulty, servings }
@@ -27,7 +29,7 @@ async function callGeminiAPI(ingredients, dietary, difficulty, servings) {
 
         const response = await fetch(CONFIG.GOOGLE_SHEETS.SCRIPT_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            mode: 'cors',
             body: JSON.stringify(payload)
         });
 
@@ -53,6 +55,10 @@ async function callGeminiAPI(ingredients, dietary, difficulty, servings) {
 
     } catch (error) {
         console.error('Backend AI Error:', error);
+        const message = error.message || ''; 
+        if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
+            throw new Error('無法連線到後端，請檢查 Google Apps Script URL、網路連線與 CORS 設定。');
+        }
         throw new Error(`無法生成食譜: ${error.message}`);
     }
 }
@@ -60,6 +66,30 @@ async function callGeminiAPI(ingredients, dietary, difficulty, servings) {
 /**
  * Build the prompt for recipe generation
  */
+async function validateAppsScriptEndpoint() {
+    try {
+        const pingUrl = `${CONFIG.GOOGLE_SHEETS.SCRIPT_URL}?action=ping`;
+        const response = await fetch(pingUrl, {
+            method: 'GET',
+            mode: 'cors'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Apps Script ping 返回 HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error(data.message || 'Apps Script ping 返回失敗');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Apps Script endpoint validation failed:', error);
+        throw new Error('無法連線到 Apps Script，請確認 SCRIPT_URL 為正確的 Web App exec URL，並且已設定為「Anyone, even anonymous」訪問。詳細錯誤：' + error.message);
+    }
+}
+
 function buildRecipePrompt(ingredients, dietary, difficulty, servings) {
     return `你是一位專業的食譜顧問。根據以下信息生成食譜建議：
 
@@ -208,7 +238,7 @@ async function saveRecipeToSheets(recipe, ingredients, dietary) {
 
         const response = await fetch(CONFIG.GOOGLE_SHEETS.SCRIPT_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            mode: 'cors',
             body: JSON.stringify(data)
         });
 
@@ -223,6 +253,10 @@ async function saveRecipeToSheets(recipe, ingredients, dietary) {
 
     } catch (error) {
         console.error('Save to Sheets Error:', error);
+        const message = error.message || '';
+        if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
+            throw new Error('無法連線到 Google Apps Script，請檢查部署 URL、網路連線與 CORS 設定。');
+        }
         throw new Error(`無法保存到 Google Sheets: ${error.message}`);
     }
 }
