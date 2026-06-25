@@ -2,6 +2,15 @@
 
 // IMPORTANT: Replace with your actual values
 const CONFIG = {
+    // Google Sign-In Configuration (OAuth 2.0)
+    GOOGLE_AUTH: {
+        // 將此替換為您的 Google OAuth 2.0 Client ID
+        // 從 Google Cloud Console 獲取: https://console.cloud.google.com/
+        CLIENT_ID: '592081736425-fs9tb30jtri7ifp9t4ak9nhsdnm2rc41.apps.googleusercontent.com',
+        // 登入作用域
+        SCOPES: 'profile email'
+    },
+
     // Google Sheets Configuration
     GOOGLE_SHEETS: {
         // Your Google Apps Script deployment URL
@@ -29,7 +38,8 @@ const CONFIG = {
     APP: {
         MAX_INGREDIENTS: 20,
         RECIPE_LANGUAGE: 'zh-TW',
-        TEMPERATURE: 0.7
+        TEMPERATURE: 0.7,
+        REQUIRE_LOGIN: true  // 需要登入才能使用
     }
 };
 

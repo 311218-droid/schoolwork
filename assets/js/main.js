@@ -3,6 +3,19 @@
 let currentRecipes = [];
 
 /**
+ * Generate recipe with authentication check
+ */
+async function generateRecipeWithAuth() {
+    // Check if user is logged in
+    if (!checkLoginBeforeAction()) {
+        return;
+    }
+    
+    // Proceed with recipe generation
+    await generateRecipe();
+}
+
+/**
  * Generate recipe based on user input
  */
 async function generateRecipe() {
@@ -130,6 +143,11 @@ function displayRecipes(recipes, ingredients, dietary) {
  * Save individual recipe to Google Sheets
  */
 async function saveIndividualRecipe(index) {
+    // Check if user is logged in
+    if (!checkLoginBeforeAction()) {
+        return;
+    }
+
     if (index >= currentRecipes.length) {
         showError('食譜索引錯誤');
         return;
@@ -154,6 +172,11 @@ async function saveIndividualRecipe(index) {
  * Save all recipes to Google Sheets
  */
 async function saveToSheets() {
+    // Check if user is logged in
+    if (!checkLoginBeforeAction()) {
+        return;
+    }
+
     if (currentRecipes.length === 0) {
         showError('沒有食譜可保存');
         return;

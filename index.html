@@ -14,12 +14,36 @@
                 <h1>🍳 SmartChef AI</h1>
                 <p class="subtitle">智慧食譜推薦系統</p>
             </div>
+            <!-- User Info (Top Right) -->
+            <div id="userInfo" class="user-info hidden"></div>
         </header>
 
         <!-- Main Content -->
-        <main class="main-content">
+        <main class="main-content" id="mainContent">
+            <!-- Auth Message -->
+            <div id="authMessage" class="auth-message hidden"></div>
+
+            <!-- Login Section -->
+            <section id="loginSection" class="login-section">
+                <div class="card login-card">
+                    <h2>🔐 登入 SmartChef AI</h2>
+                    <p class="login-description">請使用 Google 帳號登入以使用 AI 食譜推薦服務</p>
+                    
+                    <div id="googleSignInButton" class="google-signin-container"></div>
+                    
+                    <div class="login-info">
+                        <p>✨ 登入後您可以：</p>
+                        <ul>
+                            <li>🤖 使用 AI 生成個人化食譜</li>
+                            <li>💾 保存食譜到 Google Sheets</li>
+                            <li>👤 同步個人偏好設定</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
             <!-- Input Section -->
-            <section class="input-section">
+            <section class="input-section hidden">
                 <div class="card">
                     <h2>📝 輸入食材與偏好</h2>
                     
@@ -65,7 +89,7 @@
                     </div>
 
                     <div class="button-group">
-                        <button id="generateBtn" class="btn btn-primary" onclick="generateRecipe()">
+                        <button id="generateBtn" class="btn btn-primary" onclick="generateRecipeWithAuth()">
                             🤖 生成食譜
                         </button>
                         <button id="saveBtn" class="btn btn-secondary" onclick="saveToSheets()" disabled>
@@ -96,7 +120,7 @@
             <div id="errorMessage" class="error-message hidden"></div>
 
             <!-- Info Box -->
-            <section class="info-section">
+            <section class="info-section hidden">
                 <div class="info-card">
                     <h3>💡 使用提示</h3>
                     <ul>
@@ -111,12 +135,35 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>SmartChef AI © 2024 | 驅動免費 AI API (Gemini)</p>
+            <p>SmartChef AI © 2024 | 驅動免費 AI API (Gemini) | 使用 Google Sign-In</p>
         </footer>
     </div>
 
+    <!-- Google Sign-In Library -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- App Scripts -->
     <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/auth.js"></script>
     <script src="./assets/js/api.js"></script>
     <script src="./assets/js/main.js"></script>
+    
+    <!-- Initialize Google Sign-In Button -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait for Google GSI to load
+            if (window.google && window.google.accounts && window.google.accounts.id) {
+                google.accounts.id.renderButton(
+                    document.getElementById('googleSignInButton'),
+                    {
+                        theme: 'outline',
+                        size: 'large',
+                        width: '300',
+                        locale: 'zh_TW'
+                    }
+                );
+            }
+        });
+    </script>
 </body>
 </html>
